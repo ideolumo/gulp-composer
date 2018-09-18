@@ -1,3 +1,5 @@
+const undertakerForwardReference = require('undertaker-forward-reference');
+
 function mapComposables(gulp, composables) {
   return composables.map(c => composeIfPossible(gulp, c))
 }
@@ -97,6 +99,7 @@ class gulpComposeWatch extends gulpComposeComposable {
 class gulpCompose {
   constructor(gulp) {
     this.gulp = gulp ? gulp : require('gulp')
+    this.gulp.registry(undertakerForwardReference())
     this.tasks = {}
   }
 
