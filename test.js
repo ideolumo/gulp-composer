@@ -154,3 +154,29 @@ tape('gulpCompose.compose should compose more complex tasks', t => {
     t.end()
   })
 })
+
+tape.skip('gulpCompose.pump should wrap a pump', t => {
+  let gc = new gulpCompose()
+
+  let task1Called = false
+  let task1Fn = done => {
+    task1Called = true
+    done()
+  }
+
+  let task2Called = false
+  let task2Fn = done => {
+    task2Called = true
+    done()
+  }
+
+  gc.task('test', gc.series(gc.pump([task1Fn, task2Fn], (err) => console.log(err))))
+  let gulp = gc.compose()
+  gulp.task('test')(done => {
+    t.ok(task1Called, 'task1 got called')
+    t.ok(task2Called, 'task2 got called')
+
+    t.end()
+  })
+
+})
