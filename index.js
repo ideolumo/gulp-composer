@@ -68,6 +68,7 @@ class gulpComposeSrc extends gulpComposeComposable {
 
 class gulpComposeDest extends gulpComposeComposable {
   constructor(path, options) {
+    super()
     this.path = path
     this.options = options
   }

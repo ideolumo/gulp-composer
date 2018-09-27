@@ -178,5 +178,11 @@ tape.skip('gulpCompose.pump should wrap a pump', t => {
 
     t.end()
   })
+})
 
+tape('gulpCompose.dest() should wrap a gulp.dest()', t => {
+  let gc = new gulpCompose()
+
+  let dest = gc.dest('./build')
+  t.end()
 })
