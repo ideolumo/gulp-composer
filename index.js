@@ -6,6 +6,7 @@ function mapComposables(gulp, composables) {
 }
 
 function composeIfPossible(gulp, composable) {
+  let type = typeof composable
   return composable instanceof gulpComposeComposable ? composable.compose(gulp) : composable
 }
 
@@ -19,13 +20,13 @@ class gulpComposeComposable {
 }
 
 class gulpComposeSeries extends gulpComposeComposable{
-  constructor(...tasks) {
+  constructor(...fns) {
     super()
-    this.tasks = tasks
+    this.fns = fns
   }
 
   compose(gulp) {
-    return gulp.series(...mapComposables(gulp, this.tasks))
+    return gulp.series(...mapComposables(gulp, this.fns))
   }
 }
 
@@ -108,6 +109,17 @@ class gulpComposePump extends gulpComposeComposable {
   }
 }
 
+class gulpComposeFunction extends gulpComposeComposable {
+  constructor(fn) {
+    super()
+    this.fn = fn
+  }
+
+  compose(gulp) {
+    return (cb) => composeIfPossible(gulp, this.fn)
+  }
+}
+
 class gulpCompose {
   constructor(gulp) {
     this.gulp = gulp ? gulp : require('gulp')
@@ -127,12 +139,16 @@ class gulpCompose {
     return new gulpComposeWatch(globs, options, fns)
   }
 
+  fn(fn) {
+    return new gulpComposeFunction(fn)
+  }
+
   pump(fns, cb) {
     return new gulpComposePump(fns, cb)
   }
 
-  series(...tasks) {
-    return new gulpComposeSeries(...tasks)
+  series(...fns) {
+    return new gulpComposeSeries(...fns)
   }
 
   parallel(...tasks) {
