@@ -119,7 +119,7 @@ class gulpCompose {
   }
 
   dest(path, options) {
-    return new gulpComposeDest(dest, options)
+    return new gulpComposeDest(path, options)
   }
 
   watch(globs, options, fns) {
