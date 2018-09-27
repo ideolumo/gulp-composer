@@ -58,7 +58,7 @@ class gulpComposeSrc extends gulpComposeComposable {
     let gulpSource = gulp.src(this.globs, this.options)
     for(let pipe of this.pipes) {
       if(pipe instanceof gulpComposeComposable) {
-        gulpSource = gulpSource.pipe(pipe.compose())
+        gulpSource = gulpSource.pipe(pipe.compose(gulp))
       } else {
         gulpSource = gulpSource.pipe(pipe)
       }
