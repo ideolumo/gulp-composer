@@ -116,7 +116,7 @@ class gulpComposeFunction extends gulpComposeComposable {
   }
 
   compose(gulp) {
-    return this.fn
+    return composeIfPossible(gulp, this.fn)
   }
 }
 
@@ -156,6 +156,7 @@ class gulpCompose {
   }
 
   task(name, fn) {
+    if(!fn) return this.tasks[name]
     this.tasks[name] = fn
   }
 

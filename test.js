@@ -202,3 +202,32 @@ tape('.fn() should wrap a function', t => {
 
   t.end()
 })
+
+tape('.fn() should wrap a composable', t => {
+  let gc = new gulpCompose()
+
+  let task1Called = false
+  let task1Fn = done => {
+    task1Called = true
+    done()
+  }
+
+  let task2Called = false
+  let task2Fn = done => {
+    t.comment('hallo')
+    task2Called = true
+    done()
+  }
+  gc.task('test', gc.fn(gc.series(
+      task1Fn,
+      task2Fn
+  )))
+
+  let gulp = gc.compose()
+  gulp.task('test')(done => {
+    t.ok(task1Called, 'task1Fn got called')
+    t.ok(task2Called, 'task2Fn got called')
+
+    t.end()
+  })
+})
