@@ -116,7 +116,7 @@ class gulpComposeFunction extends gulpComposeComposable {
   }
 
   compose(gulp) {
-    return (cb) => composeIfPossible(gulp, this.fn)
+    return this.fn
   }
 }
 

@@ -1,4 +1,3 @@
-const bach = require('bach')
 const gulpCompose = require('./index')
 const tape = require('tape')
 
@@ -184,5 +183,22 @@ tape('gulpCompose.dest() should wrap a gulp.dest()', t => {
   let gc = new gulpCompose()
 
   let dest = gc.dest('./build')
+  t.end()
+})
+
+tape('.fn() should wrap a function', t => {
+  let gc = new gulpCompose()
+
+  let fnGotCalled = false
+
+  gc.task('test', gc.fn(() => {
+    fnGotCalled = true
+  }))
+
+  let gulp = gc.compose()
+  gulp.task('test')()
+
+  t.ok(fnGotCalled, 'wrapped function got executed')
+
   t.end()
 })
