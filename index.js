@@ -1,7 +1,14 @@
-const undertakerForwardReference = require('undertaker-forward-reference');
-const pump = require('pump');
+'use strict'
+
+const undertakerForwardReference = require('undertaker-forward-reference')
+const pump = require('pump')
+const tempy = require('tempy')
 
 function mapComposables(gulp, composables) {
+  return composables.map(c => c.compose(gulp))
+}
+
+function mapComposablesIfPossible(gulp, composables) {
   return composables.map(c => composeIfPossible(gulp, c))
 }
 
@@ -26,7 +33,7 @@ class gulpComposeSeries extends gulpComposeComposable{
   }
 
   compose(gulp) {
-    return gulp.series(...mapComposables(gulp, this.fns))
+    return gulp.series(...mapComposablesIfPossible(gulp, this.fns))
   }
 }
 
@@ -37,7 +44,7 @@ class gulpComposeParallel extends gulpComposeComposable {
   }
 
     compose(gulp) {
-      return gulp.parallel(...mapComposables(gulp, this.tasks))
+      return gulp.parallel(...mapComposablesIfPossible(gulp, this.tasks))
     }
 }
 
@@ -84,16 +91,25 @@ class gulpComposeWatch extends gulpComposeComposable {
   constructor(globs, options, fns) {
     super()
     this.globs = globs
-    if(!fn) {
+    if(!fns) {
       fns = options
       options = undefined
     }
     this.options = options
     this.fns = fns
+    this.events = {}
+  }
+
+  on(eventName, cb) {
+    this.events[eventName] = cb
   }
 
   compose(gulp) {
-    return gulp.watch(this.globs, this.options, this.fns)
+    let watcher = gulp.watch(this.globs, this.options, this.fns)
+    for(let eventName in this.events) {
+      watcher.on(eventName, this.events[eventName])
+    }
+    return watcher
   }
 }
 
@@ -105,7 +121,7 @@ class gulpComposePump extends gulpComposeComposable {
   }
 
   compose(gulp) {
-    return pump(mapComposables(gulp, this.fns), this.cb)
+    return pump(mapComposablesIfPossible(gulp, this.fns), this.cb)
   }
 }
 
@@ -122,11 +138,24 @@ class gulpComposeFunction extends gulpComposeComposable {
   }
 }
 
+class gulpComposeTask extends gulpComposeComposable {
+  constructor(name, fn) {
+    super()
+    this.name = name
+    this.fn = fn
+  }
+
+  compose(gulp) {
+    return gulp.task(this.name, composeIfPossible(gulp, this.fn))
+  }
+}
+
 class gulpCompose {
   constructor(gulp) {
     this.gulp = gulp ? gulp : require('gulp')
     this.gulp.registry(undertakerForwardReference())
     this.tasks = {}
+    this.watchers = []
   }
 
   src(globs, options) {
@@ -138,7 +167,9 @@ class gulpCompose {
   }
 
   watch(globs, options, fns) {
-    return new gulpComposeWatch(globs, options, fns)
+    let watcher = new gulpComposeWatch(globs, options, fns)
+    this.watchers.push(watcher)
+    return watcher
   }
 
   fn(fn) {
@@ -159,15 +190,12 @@ class gulpCompose {
 
   task(name, fn) {
     if(!fn) return this.tasks[name]
-    this.tasks[name] = fn
+    this.tasks[name] = new gulpComposeTask(name, fn)
   }
 
   compose() {
-    for(let task in this.tasks) {
-      let fn = composeIfPossible(this.gulp, this.tasks[task])
-      this.gulp.task(task, fn)
-    }
-
+    mapComposables(this.gulp, Object.values(this.tasks))
+    mapComposables(this.gulp, this.watchers)
     return this.gulp
   }
 }

@@ -1,5 +1,10 @@
+'use strict'
+
 const gulpCompose = require('./index')
 const tape = require('tape')
+const tempy = require('tempy')
+const path = require('path')
+const fs = require('fs')
 
 tape('should compose an series task', t => {
   let gc = new gulpCompose()
@@ -20,6 +25,7 @@ tape('should compose an series task', t => {
   gc.task(taskName, gc.series(...tasks))
   t.ok(gc.tasks['test'], 'test task should exists')
   let gulp = gc.compose()
+  console.log(gulp._registry._tasks)
   t.ok(gulp._registry._tasks.test.unwrap().displayName == '<series>', 'unwrapped task should be an series task')
   gulp.task('test')(done => {
     t.ok(task1Called, 'task1 got called')
@@ -218,6 +224,7 @@ tape('.fn() should wrap a composable', t => {
     task2Called = true
     done()
   }
+
   gc.task('test', gc.fn(gc.series(
       task1Fn,
       task2Fn
@@ -231,4 +238,27 @@ tape('.fn() should wrap a composable', t => {
 
     t.end()
   })
+})
+
+function updateTempFile(path) {
+  setTimeout(() => {
+    console.log('Changed', path)
+    fs.appendFileSync(path, ' changed')
+  }, 125)
+}
+
+tape('.watch() should wrap a gulp.watch', t => {
+  let gc = new gulpCompose()
+  let tmpFile = tempy.file()
+
+  let watcher
+
+  let gcWatcher = gc.watch(tmpFile, () => {
+    t.comment('cb got called')
+    watcher.close()
+    t.end()
+  })
+
+  watcher = gcWatcher.compose(gc.gulp)
+  updateTempFile(tmpFile)
 })
