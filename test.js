@@ -5,6 +5,7 @@ const tape = require('tape')
 const tempy = require('tempy')
 const path = require('path')
 const fs = require('fs')
+const through = require('through2');
 
 tape('should compose an series task', t => {
   let gc = new gulpCompose()
@@ -261,4 +262,24 @@ tape('.watch() should wrap a gulp.watch', t => {
 
   watcher = gcWatcher.compose(gc.gulp)
   updateTempFile(tmpFile)
+})
+
+tape('.pump() should wrap stream transformers and run at least twice', t => {
+  let gc = new gulpCompose()
+  let tmpFileIn = tempy.file()
+  let tmpFileOut = tempy.file()
+
+  gc.task('test', gc.pump([
+    gc.src(tmpFileIn),
+    gc.dest(tmpFileOut)
+  ]).compose(gc.gulp))
+
+  let gulp = gc.compose()
+  gulp.task('test').unwrap()(cb => {
+    t.comment('First run went through')
+    gulp.task('test').unwrap()(cb => {
+      t.comment('Second run went through')
+      t.end()
+    })
+  })
 })

@@ -123,15 +123,14 @@ class gulpComposePump extends gulpComposeComposable {
   constructor(fns, cb) {
     super()
     this.fns = fns
-    //if(!cb) cb = err => {if(err) console.log(err)}
     this.cb = cb
   }
 
   compose(gulp) {
     let composedFns = mapComposablesIfPossible(gulp, this.fns)
     //console.log('test', composedFns)
-    return (cb) => {
-      return pump(...composedFns, cb)
+    return (gulpCb) => {
+      return pump(...composedFns, gulpCb)
     }
   }
 }
