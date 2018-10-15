@@ -202,7 +202,7 @@ tape('.fn() should wrap a function', t => {
   }))
 
   let gulp = gc.compose()
-  gulp.task('test')()
+  gulp.task('test').unwrap()()
 
   t.ok(fnGotCalled, 'wrapped function got executed')
 
@@ -232,7 +232,7 @@ tape('.fn() should wrap a composable', t => {
 
 
   let gulp = gc.compose()
-  gulp.task('test')()(done => {
+  gulp.task('test').unwrap()(done => {
     t.ok(task1Called, 'task1Fn got called')
     t.ok(task2Called, 'task2Fn got called')
 

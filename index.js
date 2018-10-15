@@ -61,16 +61,22 @@ class gulpComposeSrc extends gulpComposeComposable {
     return this
   }
 
-  compose(gulp) {
-    let gulpSource = gulp.src(this.globs, this.options)
-    for(let pipe of this.pipes) {
-      if(pipe instanceof gulpComposeComposable) {
-        gulpSource = gulpSource.pipe(pipe.compose(gulp))
-      } else {
-        gulpSource = gulpSource.pipe(pipe)
-      }
+
+    pipe(fn) {
+      this.pipes.push(fn)
+      return this
     }
-    return gulpSource
+
+    compose(gulp) {
+      let gulpSource = gulp.src(this.globs, this.options)
+      for(let pipe of this.pipes) {
+        if(pipe instanceof gulpComposeComposable) {
+          gulpSource = gulpSource.pipe(pipe.compose(gulp))
+        } else {
+          gulpSource = gulpSource.pipe(pipe)
+        }
+      }
+      return gulpSource
   }
 }
 
@@ -117,11 +123,16 @@ class gulpComposePump extends gulpComposeComposable {
   constructor(fns, cb) {
     super()
     this.fns = fns
+    //if(!cb) cb = err => {if(err) console.log(err)}
     this.cb = cb
   }
 
   compose(gulp) {
-    return pump(mapComposablesIfPossible(gulp, this.fns), this.cb)
+    let composedFns = mapComposablesIfPossible(gulp, this.fns)
+    //console.log('test', composedFns)
+    return (cb) => {
+      return pump(...composedFns, cb)
+    }
   }
 }
 
@@ -133,7 +144,7 @@ class gulpComposeFunction extends gulpComposeComposable {
 
   compose(gulp) {
     return this.fn instanceof gulpComposeComposable ?
-      () => this.fn.compose(gulp) :
+      this.fn.compose(gulp) :
       this.fn
   }
 }
@@ -168,7 +179,6 @@ class gulpCompose {
 
   watch(globs, options, fns) {
     let watcher = new gulpComposeWatch(globs, options, fns)
-    this.watchers.push(watcher)
     return watcher
   }
 
@@ -194,8 +204,11 @@ class gulpCompose {
   }
 
   compose() {
-    mapComposables(this.gulp, Object.values(this.tasks))
-    mapComposables(this.gulp, this.watchers)
+    for(let task in this.tasks) {
+      console.log(`[COMPOSER] Composing task ${task}...`)
+      this.tasks[task].compose(this.gulp)
+    }
+
     return this.gulp
   }
 }
