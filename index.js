@@ -120,17 +120,18 @@ class gulpComposeWatch extends gulpComposeComposable {
 }
 
 class gulpComposePump extends gulpComposeComposable {
-  constructor(fns, cb) {
+  constructor(fns) {
     super()
     this.fns = fns
-    this.cb = cb
   }
 
   compose(gulp) {
-    let composedFns = mapComposablesIfPossible(gulp, this.fns)
-    //console.log('test', composedFns)
+    let pumped = (cb) => {
+      pump(mapComposablesIfPossible(gulp, this.fns),cb)
+    }
+
     return (gulpCb) => {
-      return pump(...composedFns, gulpCb)
+      pumped(gulpCb)
     }
   }
 }
@@ -185,8 +186,8 @@ class gulpCompose {
     return new gulpComposeFunction(fn)
   }
 
-  pump(fns, cb) {
-    return new gulpComposePump(fns, cb)
+  pump(fns) {
+    return new gulpComposePump(fns)
   }
 
   series(...fns) {

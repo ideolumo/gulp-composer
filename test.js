@@ -278,7 +278,7 @@ tape('.pump() should wrap stream transformers and run at least twice', t => {
   gulp.task('test').unwrap()(cb => {
     t.comment('First run went through')
     gulp.task('test').unwrap()(cb => {
-      t.comment('Second run went through')
+      t.comment('First run went through')
       t.end()
     })
   })
